@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 Industrial Upgrade — Справочник семян</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #4a4a6a;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #7ec850;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #4a4a6a;
+            border-radius: 25px;
+            background: #2a2a4a;
+            color: #e0e0e0;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #7ec850;
+        }
+
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            background: #2a2a4a;
+            color: #e0e0e0;
+            border: 2px solid #4a4a6a;
+        }
+
+        .category-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background: #7ec850;
+            color: #1a1a2e;
+            border-color: #7ec850;
+        }
+
+        .category-btn[data-category="base"] { background: #5c7c64; }
+        .category-btn[data-category="base"].active { background: #7ec850; color: #1a1a2e; }
+        
+        .category-btn[data-category="crops"] { background: #8b5a3a; }
+        .category-btn[data-category="crops"].active { background: #c8a882; color: #1a1a2e; }
+        
+        .category-btn[data-category="metals"] { background: #4a6a8a; }
+        .category-btn[data-category="metals"].active { background: #6aa8c8; color: #1a1a2e; }
+        
+        .category-btn[data-category="rare"] { background: #6a4a8a; }
+        .category-btn[data-category="rare"].active { background: #a86ac8; color: #1a1a2e; }
+        
+        .category-btn[data-category="radioactive"] { background: #8a6a4a; }
+        .category-btn[data-category="radioactive"].active { background: #c8a86a; color: #1a1a2e; }
+        
+        .category-btn[data-category="ender"] { background: #4a8a6a; }
+        .category-btn[data-category="ender"].active { background: #6ac8a8; color: #1a1a2e; }
+        
+        .category-btn[data-category="nuclear"] { background: #8a4a4a; }
+        .category-btn[data-category="nuclear"].active { background: #c86a6a; color: #1a1a2e; }
+
+        .plants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .plant-card {
+            background: #2a2a4a;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #4a4a6a;
+        }
+
+        .plant-card:hover {
+            transform: translateY(-5px);
+            border-color: #7ec850;
+            box-shadow: 0 10px 30px rgba(126, 200, 80, 0.2);
+        }
+
+        .plant-card h3 {
+            color: #7ec850;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .plant-card .id {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .plant-card .soil {
+            color: #aaa;
+            font-size: 0.85em;
+            padding: 5px 10px;
+            background: #1a1a2e;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .plant-card .category-tag {
+            float: right;
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #4a4a6a;
+            color: #ccc;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .modal {
+            background: #2a2a4a;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            margin: 40px auto;
+            border: 2px solid #7ec850;
+            box-shadow: 0 20px 60px rgba(126, 200, 80, 0.3);
+        }
+
+        .modal-header {
+            padding: 25px;
+            border-bottom: 2px solid #4a4a6a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #7ec850;
+            font-size: 1.8em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 2em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #7ec850;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .plant-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .info-item label {
+            color: #888;
+            font-size: 0.85em;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-item span {
+            color: #e0e0e0;
+            font-size: 1.1em;
+        }
+
+        .recipe-section {
+            margin-top: 30px;
+        }
+
+        .recipe-section h3 {
+            color: #c8a882;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .recipe-tree {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .tree-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tree-control-btn {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            border: 1px solid #4a4a6a;
+            border-radius: 6px;
+            background: #2a2a4a;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tree-control-btn:hover {
+            background: #3a3a5a;
+            border-color: #7ec850;
+        }
+
+        .tree-node {
+            margin: 4px 0;
+        }
+
+        .tree-node-content {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        .tree-node-content:hover {
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(126, 200, 80, 0.3);
+        }
+
+        .tree-node-content.root {
+            background: linear-gradient(135deg, #7ec850 0%, #5a9a3a 100%);
+            color: #1a1a2e;
+            font-size: 1em;
+        }
+
+        .tree-node-content.base {
+            background: linear-gradient(135deg, #5c7c64 0%, #4a6a52 100%);
+            color: #fff;
+        }
+
+        .tree-node-content.intermediate {
+            background: linear-gradient(135deg, #8a6ac8 0%, #6a4aa8 100%);
+            color: #fff;
+        }
+
+        .tree-children {
+            margin-left: 18px;
+            padding-left: 12px;
+            border-left: 2px solid #4a4a6a;
+        }
+
+        .tree-children.collapsed {
+            display: none;
+        }
+
+        .tree-branch {
+            display: flex;
+            align-items: center;
+            margin: 3px 0;
+        }
+
+        .tree-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            background: #4a4a6a;
+            color: #fff;
+            font-size: 0.8em;
+            cursor: pointer;
+            margin-right: 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .tree-toggle:hover {
+            background: #7ec850;
+            color: #1a1a2e;
+        }
+
+        .tree-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .no-recipe {
+            color: #888;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .ingredients {
+            margin-top: 15px;
+            padding: 15px;
+            background: #2a2a4a;
+            border-radius: 10px;
+        }
+
+        .ingredients h4 {
+            color: #aaa;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .ingredients-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .ingredient-item {
+            padding: 8px 15px;
+            background: #1a1a2e;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: 1px solid #4a4a6a;
+            transition: all 0.3s;
+        }
+
+        .ingredient-item:hover {
+            border-color: #7ec850;
+            background: #3a3a5a;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .plants-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal {
+                margin: 10px;
+            }
+
+            .tree-children {
+                margin-left: 15px;
+                padding-left: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 Industrial Upgrade</h1>
+            <p>Полный справочник по селекции растений</p>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск растений...">
+            </div>
+        </header>
+
+        <div class="categories">
+            <button class="category-btn active" data-category="all">Все</button>
+            <button class="category-btn" data-category="base">🌿 Базовые</button>
+            <button class="category-btn" data-category="crops">🌾 Растения</button>
+            <button class="category-btn" data-category="metals">⚙️ Металлы</button>
+            <button class="category-btn" data-category="rare">💎 Редкие</button>
+            <button class="category-btn" data-category="radioactive">☢️ Радиоактивные</button>
+            <button class="category-btn" data-category="ender">🔮 Эндер/Незер</button>
+            <button class="category-btn" data-category="nuclear">🧬 Ядерные</button>
+        </div>
+
+        <div class="plants-grid" id="plantsGrid"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Название растения</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="plant-info">
+                    <div class="info-item">
+                        <label>ID</label>
+                        <span id="modalId">0</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Почва</label>
+                        <span id="modalSoil">Пашня</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Категория</label>
+                        <span id="modalCategory">Базовые</span>
+                    </div>
+                </div>
+
+                <div class="recipe-section">
+                    <h3>🌳 Дерево создания</h3>
+                    <div class="tree-controls">
+                        <button class="tree-control-btn" onclick="expandAll()">📖 Развернуть всё</button>
+                        <button class="tree-control-btn" onclick="collapseAll()">📕 Свернуть всё</button>
+                    </div>
+                    <div class="recipe-tree" id="recipeTree"></div>
+                </div>
+
+                <div class="ingredients" id="ingredientsSection" style="display: none;">
+                    <h4>📋 Ингредиенты для создания:</h4>
+                    <div class="ingredients-list" id="ingredientsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const plantsData = {
+            // Базовые растения
+            0: { name: "Пшеница", id: 0, soil: "Пашня", category: "base", ingredients: [] },
+            1: { name: "Тростник", id: 1, soil: "Песок", category: "base", ingredients: [] },
+            3: { name: "Сорняк", id: 3, soil: "Песок", category: "base", ingredients: [] },
+            4: { name: "Розовый тюльпан", id: 4, soil: "Пашня", category: "base", ingredients: [] },
+            5: { name: "Хаустония серая", id: 5, soil: "Пашня", category: "base", ingredients: [] },
+            6: { name: "Мак", id: 6, soil: "Пашня", category: "base", ingredients: [] },
+            7: { name: "Лук", id: 7, soil: "Пашня", category: "base", ingredients: [] },
+            8: { name: "Коричневый гриб", id: 8, soil: "Мицелий", category: "base", ingredients: [] },
+            9: { name: "Оранжевый тюльпан", id: 9, soil: "Пашня", category: "base", ingredients: [] },
+            10: { name: "Ромашка", id: 10, soil: "Пашня", category: "base", ingredients: [] },
+            11: { name: "Белый тюльпан", id: 11, soil: "Пашня", category: "base", ingredients: [] },
+            12: { name: "Одуванчик", id: 12, soil: "Пашня", category: "base", ingredients: [] },
+            13: { name: "Красный тюльпан", id: 13, soil: "Пашня", category: "base", ingredients: [] },
+            14: { name: "Красный гриб", id: 14, soil: "Мицелий", category: "base", ingredients: [] },
+            15: { name: "Голубая орхидея", id: 15, soil: "Пашня", category: "base", ingredients: [] },
+            81: { name: "Адский нарост", id: 81, soil: "Песок душ", category: "ender", ingredients: [] },
+
+            // Сельскохозяйственные
+            16: { name: "Кукуруза", id: 16, soil: "Пашня", category: "crops", ingredients: [12, 8] },
+            2: { name: "Резиновый тростник", id: 2, soil: "Песок", category: "crops", ingredients: [1, 16] },
+            17: { name: "Свекла", id: 17, soil: "Пашня", category: "crops", ingredients: [] },
+            18: { name: "Морковь", id: 18, soil: "Пашня", category: "crops", ingredients: [] },
+            19: { name: "Картофель", id: 19, soil: "Пашня", category: "crops", ingredients: [] },
+            22: { name: "Помидор", id: 22, soil: "Пашня", category: "crops", ingredients: [19, 18, 14] },
+            20: { name: "Малина", id: 20, soil: "Пашня", category: "crops", ingredients: [13, 22] },
+            21: { name: "Хмель", id: 21, soil: "Пашня", category: "crops", ingredients: [0, 22, 16] },
+            23: { name: "Дыня", id: 23, soil: "Пашня", category: "crops", ingredients: [] },
+            24: { name: "Тыква", id: 24, soil: "Пашня", category: "crops", ingredients: [] },
+
+            // Металлические
+            44: { name: "Медное сердце", id: 44, soil: "Медная руда", category: "metals", ingredients: [19, 9] },
+            46: { name: "Железный багрянец", id: 46, soil: "Железная руда", category: "metals", ingredients: [11, 0] },
+            45: { name: "Золотой астрал", id: 45, soil: "Золотая руда", category: "metals", ingredients: [46, 44, 12] },
+            47: { name: "Алмазный остров", id: 47, soil: "Алмазная руда", category: "metals", ingredients: [45, 15, 18] },
+            48: { name: "Изумрудное сердце", id: 48, soil: "Изумрудная руда", category: "metals", ingredients: [47, 23] },
+            49: { name: "Кварцевый шторм", id: 49, soil: "Кварцевая руда", category: "metals", ingredients: [46, 5] },
+            51: { name: "Свинцовый ручей", id: 51, soil: "Свинцовая руда", category: "metals", ingredients: [5, 8] },
+            52: { name: "Оловянный призрак", id: 52, soil: "Оловянная руда", category: "metals", ingredients: [46, 49] },
+            73: { name: "Красная фурия", id: 73, soil: "Редстоун руда", category: "metals", ingredients: [6, 14, 13] },
+            74: { name: "Кремневая лавина", id: 74, soil: "Гравий", category: "metals", ingredients: [52, 46] },
+
+            // Редкие металлические
+            25: { name: "Михаловская лавра", id: 25, soil: "Михаловская руда", category: "rare", ingredients: [51, 15] },
+            26: { name: "Алюминиевая плутонка", id: 26, soil: "Алюминиевая руда", category: "rare", ingredients: [4, 73, 46] },
+            27: { name: "Ванадиевая зорька", id: 27, soil: "Ванадиевая руда", category: "rare", ingredients: [36, 41] },
+            28: { name: "Вольфрамовый лунный цветок", id: 28, soil: "Вольфрамовая руда", category: "rare", ingredients: [46, 52, 7] },
+            39: { name: "Серебряная мелодия", id: 39, soil: "Серебряная руда", category: "rare", ingredients: [46, 52, 10] },
+            33: { name: "Никелевый фейерверк", id: 33, soil: "Никелевая руда", category: "rare", ingredients: [51, 52] },
+            29: { name: "Инварный кристаллик", id: 29, soil: "Железная руда", category: "rare", ingredients: [33, 46] },
+            31: { name: "Кобальтовый грейпфрут", id: 31, soil: "Кобальтовая руда", category: "rare", ingredients: [25, 45] },
+            32: { name: "Магниевый бриллиант", id: 32, soil: "Магниевая руда", category: "rare", ingredients: [47, 4, 17] },
+            34: { name: "Платиновый токар", id: 34, soil: "Платиновая руда", category: "rare", ingredients: [31, 32] },
+            37: { name: "Шпинельный зенит", id: 37, soil: "Шпинелевая руда", category: "rare", ingredients: [47, 1, 16] },
+            42: { name: "Иридиевый снежок", id: 42, soil: "Иридиевая руда", category: "rare", ingredients: [34, 37] },
+            30: { name: "Каравковая зелень", id: 30, soil: "Шпинелевая руда", category: "rare", ingredients: [37, 20, 31] },
+            35: { name: "Титановая фантазия", id: 35, soil: "Титановая руда", category: "rare", ingredients: [28, 29] },
+            36: { name: "Хромовая нежность", id: 36, soil: "Хромовая руда", category: "rare", ingredients: [1, 49, 35] },
+            38: { name: "Электрумная симфония", id: 38, soil: "Золотая руда", category: "rare", ingredients: [39, 45, 12] },
+            40: { name: "Цинковая буря", id: 40, soil: "Цинковая руда", category: "rare", ingredients: [51, 7, 52] },
+            41: { name: "Мангановый лотос", id: 41, soil: "Марганцевая руда", category: "rare", ingredients: [32, 20] },
+            43: { name: "Германитовые чудеса", id: 43, soil: "Германитовая руда", category: "rare", ingredients: [42, 9, 35] },
+
+            // Радиоактивные и тяжёлые
+            50: { name: "Урановая фея", id: 50, soil: "Урановая руда", category: "radioactive", ingredients: [36, 21, 8] },
+            53: { name: "Арсенитовый цветок", id: 53, soil: "Мышьяковая руда", category: "radioactive", ingredients: [36, 21] },
+            54: { name: "Бариевая звезда", id: 54, soil: "Бариевая руда", category: "radioactive", ingredients: [38, 27] },
+            55: { name: "Висмутовый сад", id: 55, soil: "Висмутовая руда", category: "radioactive", ingredients: [27, 31] },
+            56: { name: "Гадолиниевый лотос", id: 56, soil: "Гадолиниевая руда", category: "radioactive", ingredients: [44, 38] },
+            57: { name: "Галлийская песня", id: 57, soil: "Галлиевая руда", category: "radioactive", ingredients: [44, 29] },
+            58: { name: "Гафниевый лист", id: 58, soil: "Гафниевая руда", category: "radioactive", ingredients: [25, 34] },
+            59: { name: "Иттербиевый блестящий", id: 59, soil: "Иттриевая руда", category: "radioactive", ingredients: [32, 37] },
+            60: { name: "Молибденовый вихрь", id: 60, soil: "Молибденовая руда", category: "radioactive", ingredients: [27, 55] },
+            61: { name: "Неодимовое сияние", id: 61, soil: "Неодимовая руда", category: "radioactive", ingredients: [32, 34] },
+            62: { name: "Ниобиевый обелиск", id: 62, soil: "Ниобиевая руда", category: "radioactive", ingredients: [34, 31, 25] },
+            63: { name: "Палладиевая нежность", id: 63, soil: "Палладиевая руда", category: "radioactive", ingredients: [56, 57] },
+            64: { name: "Полониевый кристалл", id: 64, soil: "Полониевая руда", category: "radioactive", ingredients: [61, 62] },
+            65: { name: "Стронциевая буря", id: 65, soil: "Стронциевая руда", category: "radioactive", ingredients: [30, 43] },
+            66: { name: "Талиевый солнечный свет", id: 66, soil: "Таллиевая руда", category: "radioactive", ingredients: [53, 54] },
+            67: { name: "Циркониевый дракон", id: 67, soil: "Циркониевая руда", category: "radioactive", ingredients: [59, 60] },
+            68: { name: "Осмийский шелк", id: 68, soil: "Осмиевая руда", category: "radioactive", ingredients: [42, 34, 44] },
+            69: { name: "Танталовая луна", id: 69, soil: "Танталовая руда", category: "radioactive", ingredients: [66, 53] },
+            70: { name: "Кадмиевая нежность", id: 70, soil: "Кадмиевая руда", category: "radioactive", ingredients: [60, 39, 74] },
+
+            // Эндер и Незер
+            71: { name: "Эндерская лилия", id: 71, soil: "Эндер руда", category: "ender", ingredients: [81, 64, 16, 18] },
+            72: { name: "Ифритовая буря", id: 72, soil: "Песок душ", category: "ender", ingredients: [81, 43, 0, 73] },
+            75: { name: "Гастовая роса", id: 75, soil: "Песок душ", category: "ender", ingredients: [72, 39, 74, 40] },
+            76: { name: "Костяной лист", id: 76, soil: "Песок душ", category: "ender", ingredients: [81, 74, 51] },
+
+            // Ядерные
+            79: { name: "Америциевый мох", id: 79, soil: "Урановая руда", category: "nuclear", ingredients: [50, 81, 67] },
+            78: { name: "Нептуний мудрости", id: 78, soil: "Урановая руда", category: "nuclear", ingredients: [79, 53, 55, 14] },
+            77: { name: "Кюриевая ягода", id: 77, soil: "Урановая руда", category: "nuclear", ingredients: [64, 20, 50, 78] },
+            80: { name: "Ториевый кулак", id: 80, soil: "Урановая руда", category: "nuclear", ingredients: [50, 35, 28] },
+            82: { name: "Терра варт", id: 82, soil: "Песок душ", category: "nuclear", ingredients: [71, 75, 81] }
+        };
+
+        const categoryNames = {
+            base: "🌿 Базовые",
+            crops: "🌾 Растения",
+            metals: "⚙️ Металлы",
+            rare: "💎 Редкие",
+            radioactive: "☢️ Радиоактивные",
+            ender: "🔮 Эндер/Незер",
+            nuclear: "🧬 Ядерные"
+        };
+
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        function renderPlants() {
+            const grid = document.getElementById('plantsGrid');
+            grid.innerHTML = '';
+
+            const filteredPlants = Object.values(plantsData).filter(plant => {
+                const matchesCategory = currentFilter === 'all' || plant.category === currentFilter;
+                const matchesSearch = searchQuery === '' || 
+                    plant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    plant.id.toString().includes(searchQuery);
+                return matchesCategory && matchesSearch;
+            });
+
+            filteredPlants.sort((a, b) => a.id - b.id);
+
+            filteredPlants.forEach(plant => {
+                const card = document.createElement('div');
+                card.className = 'plant-card';
+                card.innerHTML = `
+                    <span class="category-tag">${categoryNames[plant.category]}</span>
+                    <h3>${plant.name}</h3>
+                    <div class="id">ID: ${plant.id}</div>
+                    <div class="soil">🌍 ${plant.soil}</div>
+                `;
+                card.onclick = () => openModal(plant.id);
+                grid.appendChild(card);
+            });
+        }
+
+        function buildTree(plantId, visited = new Set()) {
+            const plant = plantsData[plantId];
+            if (!plant) return null;
+
+            if (visited.has(plantId)) {
+                return {
+                    ...plant,
+                    children: [],
+                    isCircular: true
+                };
+            }
+
+            visited.add(plantId);
+
+            const children = plant.ingredients.map(ingId => buildTree(ingId, new Set(visited)));
+
+            return {
+                ...plant,
+                children: children.filter(c => c !== null)
+            };
+        }
+
+        function renderTreeNode(node, isRoot = false, depth = 0) {
+            if (!node) return '';
+
+            const hasChildren = node.children && node.children.length > 0;
+            const toggleId = `toggle-${node.id}-${depth}`;
+            
+            let categoryClass;
+            if (isRoot) {
+                categoryClass = 'root';
+            } else if (node.ingredients.length === 0) {
+                categoryClass = 'base';
+            } else {
+                categoryClass = 'intermediate';
+            }
+            
+            const baseText = node.ingredients.length === 0 ? ' <span style="opacity:0.7;font-weight:normal">(БАЗА)</span>' : '';
+            const toggle = hasChildren ? `<span class="tree-toggle" onclick="toggleTree(event, '${toggleId}')">▼</span>` : '<span style="display:inline-block;width:16px;height:16px;margin-right:6px;"></span>';
+            
+            let html = `
+                <div class="tree-node">
+                    ${isRoot ? '' : '<div class="tree-branch"></div>'}
+                    <div class="tree-node-content ${categoryClass}" onclick="openModal(${node.id})">
+                        ${toggle}${node.name}${baseText}
+                    </div>
+            `;
+
+            if (hasChildren) {
+                html += `<div class="tree-children" id="${toggleId}">`;
+                node.children.forEach(child => {
+                    html += renderTreeNode(child, false, depth + 1);
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function openModal(plantId) {
+            const plant = plantsData[plantId];
+            if (!plant) return;
+
+            document.getElementById('modalTitle').textContent = plant.name;
+            document.getElementById('modalId').textContent = plant.id;
+            document.getElementById('modalSoil').textContent = plant.soil;
+            document.getElementById('modalCategory').textContent = categoryNames[plant.category];
+
+            const tree = buildTree(plantId);
+            const treeContainer = document.getElementById('recipeTree');
+            
+            if (tree && tree.children.length > 0) {
+                treeContainer.innerHTML = renderTreeNode(tree, true);
+            } else {
+                treeContainer.innerHTML = '<div class="no-recipe">🌱 Базовое растение — не требует скрещивания</div>';
+            }
+
+            const ingredientsSection = document.getElementById('ingredientsSection');
+            const ingredientsList = document.getElementById('ingredientsList');
+            
+            if (plant.ingredients && plant.ingredients.length > 0) {
+                ingredientsSection.style.display = 'block';
+                ingredientsList.innerHTML = plant.ingredients.map(ingId => {
+                    const ing = plantsData[ingId];
+                    return `<span class="ingredient-item" onclick="openModal(${ingId})">${ing ? ing.name : 'Unknown'}</span>`;
+                }).join('');
+            } else {
+                ingredientsSection.style.display = 'none';
+            }
+
+            document.getElementById('modalOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function toggleTree(event, toggleId) {
+            event.stopPropagation();
+            const children = document.getElementById(toggleId);
+            const toggle = event.target;
+            if (children) {
+                children.classList.toggle('collapsed');
+                toggle.classList.toggle('collapsed');
+                toggle.textContent = toggle.classList.contains('collapsed') ? '▶' : '▼';
+            }
+        }
+
+        function expandAll() {
+            document.querySelectorAll('.tree-children.collapsed').forEach(el => {
+                el.classList.remove('collapsed');
+            });
+            document.querySelectorAll('.tree-toggle.collapsed').forEach(el => {
+                el.classList.remove('collapsed');
+                el.textContent = '▼';
+            });
+        }
+
+        function collapseAll() {
+            document.querySelectorAll('.tree-children').forEach(el => {
+                el.classList.add('collapsed');
+            });
+            document.querySelectorAll('.tree-toggle').forEach(el => {
+                el.classList.add('collapsed');
+                el.textContent = '▶';
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modalOverlay')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.category;
+                renderPlants();
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderPlants();
+        });
+
+        renderPlants();
+    </script>
+</body>
+</html>
